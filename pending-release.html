@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pending Release — machine26</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --white: #ffffff;
+    --black: #111111;
+    --border: #e2e2e0;
+    --muted: #888;
+    --accent: #111;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --blue: #3b82f6;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--black);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 24px 80px;
+  }
+
+  /* ---- UPLOAD SCREEN ---- */
+  #uploadScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: 32px;
+    width: 100%;
+    max-width: 540px;
+  }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    text-align: center;
+    line-height: 1.1;
+    color: var(--black);
+  }
+
+  h1 span { color: #aaa; }
+
+  .drop-zone {
+    width: 100%;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--white);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--black);
+    background: #fafafa;
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+
+  .drop-icon { font-size: 36px; margin-bottom: 12px; }
+  .drop-label { font-size: 16px; font-weight: 600; color: var(--black); margin-bottom: 6px; }
+  .drop-sub { font-size: 13px; color: var(--muted); }
+
+  .file-selected {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    width: 100%;
+  }
+
+  .file-selected.visible { display: flex; }
+  .file-icon { font-size: 22px; }
+  .file-name { font-size: 14px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 2px 6px; border-radius: 4px; }
+  .file-remove:hover { background: var(--bg); color: var(--black); }
+
+  .api-row {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .api-row label { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.5px; }
+
+  .api-row input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    color: var(--black);
+    transition: border-color 0.2s;
+  }
+
+  .api-row input:focus { border-color: var(--black); }
+
+  .btn-go {
+    width: 100%;
+    background: var(--black);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-go:hover { background: #333; transform: translateY(-1px); }
+  .btn-go:active { transform: translateY(0); }
+  .btn-go:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+  /* ---- REVIEW SCREEN ---- */
+  #reviewScreen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 680px;
+    gap: 20px;
+  }
+
+  #reviewScreen.visible { display: flex; }
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .review-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .btn-reset {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-reset:hover { border-color: var(--black); color: var(--black); }
+
+  /* Machine name banner */
+  .machine-banner {
+    width: 100%;
+    background: var(--black);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .machine-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .machine-uid {
+    font-size: 12px;
+    color: #888;
+    margin-top: 3px;
+    font-family: 'Inter', monospace;
+  }
+
+  .verdict-pill {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .verdict-pill.ready { background: #dcfce7; color: #15803d; }
+  .verdict-pill.clarify { background: #fef3c7; color: #92400e; }
+  .verdict-pill.published { background: #dbeafe; color: #1e40af; }
+
+  /* Check cards */
+  .checks-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .check-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    animation: fadeIn 0.3s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(6px); }
+  }
+
+  .check-emoji {
+    font-size: 20px;
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+    margin-top: 1px;
+  }
+
+  .check-loading {
+    width: 20px; height: 20px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #111;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .check-content { flex: 1; }
+  .check-section {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .check-label { font-size: 15px; font-weight: 600; color: var(--black); }
+  .check-note { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.5; }
+
+  .check-action {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+
+  .action-change { background: #fef3c7; color: #92400e; }
+  .action-ask { background: #fee2e2; color: #991b1b; }
+  .action-ok { background: #dcfce7; color: #15803d; }
+
+  /* Slack output */
+  .slack-box {
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .slack-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: #f9f9f8;
+  }
+
+  .slack-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .btn-copy {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-copy:hover { border-color: var(--black); color: var(--black); }
+  .btn-copy.copied { background: #dcfce7; border-color: #86efac; color: #15803d; }
+
+  .slack-message {
+    padding: 18px 20px;
+    font-family: 'Slack-Lato', 'Lato', 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--black);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Section divider */
+  .section-title {
+    width: 100%;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-top: 6px;
+  }
+
+  /* Loading full */
+  .loading-full {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 48px 0;
+    width: 100%;
+  }
+
+  .loading-full .spinner { width: 32px; height: 32px; border: 2px solid #e5e7eb; border-top-color: #111; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  .loading-msg { font-size: 14px; color: var(--muted); }
+
+  /* Progress dots */
+  .progress-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 4px 0;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #e5e7eb; animation: dotpulse 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotpulse { 0%,100%{background:#e5e7eb} 50%{background:#111} }
+</style>
+</head>
+<body>
+
+<!-- ========== UPLOAD SCREEN ========== -->
+<div id="uploadScreen">
+  <div class="brand">machine26</div>
+  <h1>Pending<br><span>Release</span></h1>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="pdfInput" accept="application/pdf" onchange="handleFile(event)" />
+    <div class="drop-icon">📄</div>
+    <div class="drop-label">Upload listing PDF</div>
+    <div class="drop-sub">Drag & drop or click to browse</div>
+  </div>
+
+  <div class="file-selected" id="fileSelected">
+    <span class="file-icon">📋</span>
+    <span class="file-name" id="fileName"></span>
+    <button class="file-remove" onclick="removeFile()">×</button>
+  </div>
+
+  <div class="api-row">
+    <label>Anthropic API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." />
+  </div>
+
+  <button class="btn-go" id="goBtn" onclick="startReview()" disabled>
+    Review Listing →
+  </button>
+</div>
+
+<!-- ========== REVIEW SCREEN ========== -->
+<div id="reviewScreen">
+  <div class="review-header">
+    <div class="review-title">Review</div>
+    <button class="btn-reset" onclick="resetAll()">← New listing</button>
+  </div>
+
+  <div id="reviewContent" style="width:100%;display:flex;flex-direction:column;gap:16px"></div>
+</div>
+
+<script>
+let selectedFile = null;
+let selectedBase64 = null;
+
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') setFile(file);
+});
+
+function handleFile(event) {
+  const file = event.target.files[0];
+  if (file) setFile(file);
+}
+
+function setFile(file) {
+  selectedFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSelected').classList.add('visible');
+  document.getElementById('dropZone').style.display = 'none';
+  checkReady();
+
+  const reader = new FileReader();
+  reader.onload = e => { selectedBase64 = e.target.result.split(',')[1]; };
+  reader.readAsDataURL(file);
+}
+
+function removeFile() {
+  selectedFile = null;
+  selectedBase64 = null;
+  document.getElementById('fileSelected').classList.remove('visible');
+  document.getElementById('dropZone').style.display = '';
+  document.getElementById('pdfInput').value = '';
+  checkReady();
+}
+
+function checkReady() {
+  document.getElementById('goBtn').disabled = !selectedFile;
+}
+
+function resetAll() {
+  removeFile();
+  document.getElementById('uploadScreen').style.display = 'flex';
+  document.getElementById('reviewScreen').classList.remove('visible');
+  document.getElementById('reviewContent').innerHTML = '';
+}
+
+// ========== MAIN REVIEW ==========
+async function startReview() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  if (!selectedBase64) { alert('Please upload a PDF first.'); return; }
+
+  document.getElementById('uploadScreen').style.display = 'none';
+  document.getElementById('reviewScreen').classList.add('visible');
+
+  const content = document.getElementById('reviewContent');
+  content.innerHTML = `<div class="loading-full"><div class="spinner"></div><div class="loading-msg">Reading listing PDF...</div></div>`;
+
+  const M26_CATEGORIES = ["Mini excavator","Tracked excavator","Wheel loader","Backhoe loader","Swing shovel loader","Track loader","Skid steer loader","Compact track loader","Dozer","Grader","Dumper","Front tipper","Minidumper","Wheeled excavator","Railroad excavator","Walking excavator","Telescopic excavator","Demolition excavator","Dredging excavators","Pipelayer","Cable plough","Drainage machine","Trencher","Railroad dumper","Earth moving machines - Others","Asphalt paver","Slipform paver","Asphalt feeder","Cold milling machine","Cold recycler","Hot Recyclers","Single-drum compactor","Combination roller","Tandem roller","Pneumatic tire roller","Handheld rollers","Scraper","Scrap-Dozer","Asphalt sprayer","Chip spreader","Road construction machine - Other","Semi-trailer truck","Tractor unit","Semi-trailer","Drawbar combination","Rigid truck","Low loader","Trailer","Tipper truck","Tipper truck with crane","Skip loader","Roll-off truck","Concrete pump","Concrete mixer","Tanker truck","Sprayer truck","Railroad vacuum cleaner","Sewage Suction truck","Vacuum excavator","Pushback truck","Passenger stairs truck","Cargo Dolly","Passenger bus","Truck & Trailer - Other","Harvester","Timber truck with loading crane","Tractor","Combine harvester","Seeder","Ploughs","Harrow","Cultivators","Manure spreader","Riding Lawn Mowers","Agricultural machine - Other","Company Car","High-roof van","Panel van","Flatbed truck","Pick-up-Truck","Motorcycle","Car - Other","Crusher","Screening plant","Mobile screening plant","Conveyor/stockpile conveyor","Waste presses","Recycling machine - Other","Gantry crane","Crane","Telescopic crawler crane","Crane truck","Crane trailer","Minicrane","Crane - Other","Street sweeper","Salt spreader","Snow clearing vehicle","Gritters","Refuse collection vehicle","Care & Cleaning machine - Other","Piling equipment","Drilling rig","Core drill","Fixed and swinging leaders","Diaphragm wall grab","Dragline Excavator","Special civil engineering & Pipe construction machine - Other","Modular scaffold","Facade scaffold","Hanging scaffold","Consolde scaffold","Formwork","Formwork & Scaffolding - Other","Normal attachment / Bucket","Grapple","Hydraulic attachment","Sleeper spreader beam","Lifting gear","Attachments parts - Package","Attachments parts - Other","Floor scrubber","Vaccuum Cleaner","Shopping / Baggage Carts","Airfield Lighting","Substation","Passenger Boarding Bridge","Detection Security Equipment","Passenger Seats","Workbenches","Industry machines - Package","Industry machine - Other","Forklift","Telescopic handler","Telescopic forklift","Material handling excavator","Scissor lift","Mast platform","Articulated- / telescopic platforms","Railroad articulated- / telescopic platforms","Boom lift (crawler)","Boom lift (trailer)","Boom lift (vehicle)","Construction elevator","Construction elevator (trailer)","Construction elevator (vehicle)","Furniture elevator","Furniture elevator (trailer)","Furniture elevator (vehicle)","Handling & Lifting Equipment - Other","Clinker plant","Asphalt plant","Asphalt cold mix plant","Concrete plant","Emulsion plant","Recycling plant","Desanding plant","Stationary Plants & Customized machine - Other","Power Unit","Compressor","Screed pump","Plastering machine","Vibrating plate","Vibrating tamper","Cut off machine","Stone saw","Floor saw","Dosing device","Light tower","Welding machine","Smaller devices - Package","Smaller device - Other","Container","Tires","Spare parts","Pipes","Material","Locomotive","Train wagon","Boat","Elevator","Other - Package","Other"];
+
+  const OEM_MODELS = ["Liebherr A 910 Compact Litronic","Liebherr A 913 Compact Litronic","Liebherr A 914 Litronic","Liebherr A 916 Compact Litronic","Liebherr A 916 Litronic","Liebherr A920 Litronic","Liebherr A 924 Litronic","Liebherr A 924 Heavy Lift Litronic","Liebherr A 924 Rail Litronic","Liebherr R 914 Compact Litronic","Liebherr R 920 Compact Litronic","Liebherr R 918 Litronic","Liebherr R 922 Litronic","Liebherr R 924 Litronic","Liebherr R 926 Compact Litronic","Liebherr R 926 Litronic","Liebherr R 928 Litronic","Liebherr R 930 Litronic","Liebherr R 930 Tunnel Litronic","Liebherr R 936 Compact Litronic","Liebherr R 934 Litronic","Liebherr R 938 Litronic","Liebherr R 945 Litronic","Liebherr R 950 Tunnel Litronic","Liebherr R 956 Litronic","Liebherr R 960 SME Litronic","Liebherr R 972 Litronic","Liebherr R 978 SME Litronic","Liebherr R 992 Litronic","Liebherr R 992 E","Liebherr R 998 SME Litronic","Liebherr R 998 SME E","Liebherr R 940 Demolition Litronic","Liebherr R 950 Demolition Litronic","Liebherr R 960 Demolition Litronic","Liebherr R 980 Demolition Litronic","Liebherr TA 230 Litronic","Liebherr L504 Compact","Liebherr L 506 Compact","Liebherr L 508 Compact","Liebherr L 507 Stereo","Liebherr L 509 Stereo","Liebherr L 514 Stereo","Liebherr L 518 Stereo","Liebherr L 509 Tele","Liebherr L 526","Liebherr L 538","Liebherr L 538 Speeder","Liebherr L 546","Liebherr L 550 XPower","Liebherr L 566 Xpower","Liebherr L 576 Xpower","Liebherr L580 XPower","Liebherr L586 XPower","Liebherr PR 716 Litronic","Liebherr PR 726 Litronic","Liebherr PR 746 Litronic","Liebherr PR 756 Litronic","Liebherr PR 766 Litronic","Liebherr PR 776 Litronic","Liebherr LR 626 Litronic","Liebherr RL 46","Liebherr RL 56","Liebherr RL 66","Liebherr LB 16 unplugged","Liebherr LB 20.1","Liebherr LB 25","Liebherr LB 25 unplugged","Liebherr LB 30","Liebherr LB 30 unplugged","Liebherr LB 35","Liebherr LB 45","Liebherr LB 55","Liebherr LRB 16","Liebherr LRB 18","Liebherr LRB 23","Liebherr LRB 355.1","Liebherr LRH 100.1","Liebherr LRH 100.1 unplugged","Liebherr LRH 200","Liebherr LRH 200 unplugged","Liebherr LRH 600 with fixed leader","Liebherr LRH 600 with swinging leader","Liebherr T 32-7","Liebherr T35-6s","Liebherr T60-9s"];
+
+  const prompt = `You are a machine listing reviewer for machine26, an industrial machinery marketplace specializing in heavy construction machinery.
+
+Carefully analyze this listing PDF and perform ALL of the following checks. Return ONLY a valid JSON object — no markdown, no text outside the JSON.
+
+=== MACHINE CLASSIFICATION REFERENCE ===
+These are the OFFICIAL M26 category names. Use them to validate the listing category:
+${M26_CATEGORIES.join(', ')}
+
+=== KNOWN OEM MODEL NAMES (Liebherr) ===
+Use this to help validate model name spelling and completeness. If the listing is for a Liebherr machine, cross-check against:
+${OEM_MODELS.join(', ')}
+Note: Model names should include the full designation (e.g. "Liebherr R 926 Compact Litronic", not just "Liebherr R 926"). Variants like "Litronic", "SME", "Tunnel", "Demolition", "XPower", "Stereo", "Tele" are meaningful and should be included if visible on the type plate.
+
+=== CHECKS TO PERFORM ===
+
+A. OVERVIEW
+1. Model name — correct spelling and complete name, matches type plate if visible. For Liebherr machines, check against the OEM model list above.
+2. Offer network — reasonable (M26 dealer network, internal, Schaltec always uses Schaltec network, African machines need African network added)
+3. Offer format — multi-level bidding standard (exception: Leonard Weiss uses sealed format)
+4. Offer duration — 14 days standard (3-4 weeks for special/rare machines); should not end on a weekend or public holiday
+5. Date of availability — in past or near future (not more than 2 months ahead)
+6. Minimum price — if entered, flag: new customers must be aware that any bid above the minimum price is automatically accepted
+
+B. OVERVIEW (cont.)
+7. Unit number — entered, looks correct, no obvious misspelling
+8. Serial number (ESN) — entered, looks correct, no obvious misspelling
+9. Year of manufacture — matches type plate, registration doc, or any visible document in pictures
+10. Contact data — contact person is filled in (for M26 network: Mafe is default contact, exceptions: David with his sellers, Mr. Hahn with Bunte, Ms. Morgenstern & Rosenau with LW)
+
+C. DETAILS
+11. Description/Details — grammar and spelling OK, text is understandable; if machine is non-operational, pickup info should be included
+
+D. LINKED ASSET
+12. Category — must match one of the official M26 categories listed above. Flag if wrong or not matching the machine shown in pictures.
+
+E. CORE DATA
+13. Operating hours/Mileage — entered, reasonable for age of machine (±50h tolerance), matches hour meter visible in pictures if available. Very old machine with <100h is suspicious.
+14. Certificates — CE certificate generally required; TÜV/road certificate for trucks and road-driving machines; Rail certificate for railroad excavators
+15. Accessories & equipment — accessories visible in pictures (e.g. mounted bucket) should be listed in the report
+
+F. MEDIA
+16. Picture count — minimum 4 pictures required; for large machines (excavators, wheel loaders, etc.) more are expected
+17. Picture coverage — should include: all outside views, close-ups of key parts (cylinders, tires, chains), type plate, hour meter, cabin interior, attachments
+18. Picture quality — landscape mode preferred, good quality, no duplicate pictures
+19. Privacy — no visible faces or car license plates in pictures (must be blurred before publishing)
+20. Confidential data — no prices, discounts, or full addresses visible in pictures
+
+G. CONDITION
+21. Operational readiness — must be filled (mandatory field)
+22. Key condition points — Engine start, Functional test of main parts, Driving & Brakes should all be filled
+23. Non-operational explanation — if machine is partially or not operational, a clear explanation must be given
+24. Condition consistency — condition report entries should match the pictures and be reasonable for the age/hours of the machine
+
+H. FILES
+25. Files — check if any relevant files are uploaded, readable, and free of confidential data
+
+For each check, determine: ok / warn / fail
+- ok: passed cleanly
+- warn: minor issue, can publish but worth noting
+- fail: blocking issue that needs action
+
+Also extract:
+- machineName: full model name as listed (e.g. "Liebherr R 926 Compact Litronic")
+- uid: the UID/listing ID code
+- creator: seller/creator name
+- network: offer network name
+- offerDuration: e.g. "14 days"
+- minPrice: e.g. "30,000 EUR" or "-" if none
+- hasFaces: true if any faces are visible in photos
+- hasConfidentialData: true if any confidential data visible
+
+Return ONLY this JSON (no other text):
+{
+  "machineName": "...",
+  "uid": "...",
+  "creator": "...",
+  "network": "...",
+  "offerDuration": "...",
+  "minPrice": "...",
+  "hasFaces": false,
+  "hasConfidentialData": false,
+  "overallVerdict": "ready" | "clarify",
+  "technicalIssues": [],
+  "mediaIssues": [],
+  "conditionIssues": [],
+  "checks": [
+    {
+      "section": "A. Overview",
+      "label": "Model name",
+      "status": "ok" | "warn" | "fail",
+      "note": "short explanation if not ok, else empty string",
+      "action": "Change and publish" | "Ask seller before" | "Publish" | "Ask afterwards" | ""
+    }
+  ]
+}
+
+The checks array must contain all 25 checks in order. overallVerdict is "clarify" if ANY check is fail or if hasFaces/hasConfidentialData is true.`;
+
+  try {
+    const response = await fetch('https://corsproxy.io/?url=https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: selectedBase64 }
+            },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || 'API error ' + response.status);
+    }
+
+    const data = await response.json();
+    const rawText = data.content.find(b => b.type === 'text')?.text || '';
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+    renderReview(result);
+
+  } catch (err) {
+    content.innerHTML = `<div style="padding:32px;text-align:center;color:#ef4444;font-size:14px">Error: ${err.message}</div>`;
+  }
+}
+
+function statusEmoji(status) {
+  if (status === 'ok') return '✅';
+  if (status === 'warn') return '⚠️';
+  if (status === 'fail') return '❌';
+  return '⬜';
+}
+
+function actionClass(action) {
+  if (!action) return '';
+  if (action.toLowerCase().includes('ask')) return 'action-ask';
+  if (action.toLowerCase().includes('change')) return 'action-change';
+  return 'action-ok';
+}
+
+function renderReview(result) {
+  const content = document.getElementById('reviewContent');
+  content.innerHTML = '';
+
+  // --- Machine banner ---
+  const verdictClass = result.overallVerdict === 'ready' ? 'ready' : 'clarify';
+  const verdictLabel = result.overallVerdict === 'ready' ? '✅ Ready to publish' : '⏳ Clarification needed';
+  const banner = document.createElement('div');
+  banner.className = 'machine-banner';
+  banner.innerHTML = `
+    <div>
+      <div class="machine-name">${result.machineName || 'Unknown machine'}</div>
+      <div class="machine-uid">UID: ${result.uid || '—'} · ${result.creator || '—'}</div>
+    </div>
+    <div class="verdict-pill ${verdictClass}">${verdictLabel}</div>`;
+  content.appendChild(banner);
+
+  // --- Checks ---
+  const checksTitle = document.createElement('div');
+  checksTitle.className = 'section-title';
+  checksTitle.textContent = 'Checklist';
+  content.appendChild(checksTitle);
+
+  const checksList = document.createElement('div');
+  checksList.className = 'checks-list';
+  content.appendChild(checksList);
+
+  // Animate checks in one by one
+  (result.checks || []).forEach((check, i) => {
+    setTimeout(() => {
+      const card = document.createElement('div');
+      card.className = 'check-card';
+      card.style.animationDelay = '0ms';
+
+      const actionHtml = check.action && check.status !== 'ok'
+        ? `<span class="check-action ${actionClass(check.action)}">${check.action}</span>`
+        : '';
+
+      card.innerHTML = `
+        <div class="check-emoji">${statusEmoji(check.status)}</div>
+        <div class="check-content">
+          <div class="check-section">${check.section}</div>
+          <div class="check-label">${check.label}</div>
+          ${check.note ? `<div class="check-note">${check.note}</div>` : ''}
+        </div>
+        ${actionHtml}`;
+      checksList.appendChild(card);
+    }, i * 80);
+  });
+
+  // --- Slack message ---
+  setTimeout(() => {
+    const slackTitle = document.createElement('div');
+    slackTitle.className = 'section-title';
+    slackTitle.textContent = 'Slack Message';
+    content.appendChild(slackTitle);
+
+    const slackMsg = buildSlackMessage(result);
+    const slackBox = document.createElement('div');
+    slackBox.className = 'slack-box';
+    slackBox.innerHTML = `
+      <div class="slack-header">
+        <span class="slack-title">Copy to Slack</span>
+        <button class="btn-copy" id="copyBtn" onclick="copySlack(this, \`${escapeBacktick(slackMsg)}\`)">Copy</button>
+      </div>
+      <div class="slack-message">${escapeHtml(slackMsg)}</div>`;
+    content.appendChild(slackBox);
+  }, (result.checks || []).length * 80 + 200);
+}
+
+function buildSlackMessage(r) {
+  // Determine emoji prefix
+  const emoji = r.overallVerdict === 'ready' ? '✅' : '⏳';
+
+  const tech = r.technicalIssues && r.technicalIssues.length > 0
+    ? r.technicalIssues.join(', ')
+    : 'OK';
+
+  const media = r.mediaIssues && r.mediaIssues.length > 0
+    ? r.mediaIssues.join(', ')
+    : 'OK';
+
+  const condition = r.conditionIssues && r.conditionIssues.length > 0
+    ? r.conditionIssues.join(', ')
+    : 'OK';
+
+  const faceNote = r.hasFaces ? '\n@Christian please blur faces before publishing' : '';
+  const readyLine = r.overallVerdict === 'ready' ? '\nPublished' : '';
+
+  return `${emoji} ${r.machineName || 'Unknown'}
+UID: ${r.uid || '—'}
+Creator: ${r.creator || '—'}
+Network: ${r.network || '—'}
+Offer ends: ${r.offerDuration || '—'}
+Min Price: ${r.minPrice || '-'}
+Technical: ${tech}
+Media: ${media}
+Condition: ${condition}${faceNote}${readyLine}`;
+}
+
+function copySlack(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function escapeBacktick(str) {
+  return str.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
+}
+</script>
+</body>
+</html>
